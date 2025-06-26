@@ -1,0 +1,65 @@
+trigger:
+- main
+
+variables:
+  buildConfiguration: 'Release'
+
+stages:
+- stage: Build
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'restore'
+        projects: '**/WebApi.csproj'
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'build'
+        projects: '**/WebApi.csproj'
+        arguments: '--configuration $(buildConfiguration)'
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: '**/WebApi.csproj'
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    - publish: $(Build.ArtifactStagingDirectory)
+      artifact: api
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+    - script: |
+        cd frontend
+        npm install
+        npm run build -- --output-path=dist
+      displayName: 'Build Angular'
+    - publish: frontend/dist
+      artifact: webapp
+
+- stage: Deploy
+  jobs:
+  - deployment: Deploy
+    environment: 'dev'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: api
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: '$(AZURE_CONNECTION)'
+              appName: 'api-dev'
+              package: $(Pipeline.Workspace)/api
+          - download: current
+            artifact: webapp
+          - task: AzureStaticWebApp@0
+            inputs:
+              app_location: '/'
+              output_location: 'frontend/dist'
+              azure_static_web_apps_api_token: '$(STATIC_WEB_APP_TOKEN)'
