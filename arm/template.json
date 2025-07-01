@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-09-01",
+      "name": "appservice-plan",
+      "location": "eastus",
+      "sku": {
+        "name": "B1",
+        "tier": "Basic"
+      },
+      "kind": "linux"
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-09-01",
+      "name": "angular-abcde",
+      "location": "eastus",
+      "dependsOn": [
+        "appservice-plan"
+      ],
+      "properties": {
+        "serverFarmId": "appservice-plan",
+        "httpsOnly": true
+      },
+      "kind": "app,linux"
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-09-01",
+      "name": "webapi-fghij",
+      "location": "eastus",
+      "dependsOn": [
+        "appservice-plan"
+      ],
+      "properties": {
+        "serverFarmId": "appservice-plan",
+        "httpsOnly": true
+      },
+      "kind": "app,linux"
+    }
+  ]
+}

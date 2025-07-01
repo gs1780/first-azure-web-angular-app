@@ -1,0 +1,11 @@
+# Node
+node_modules/
+
+# .NET
+bin/
+obj/
+
+# Build artifacts
+/dist/
+
+
